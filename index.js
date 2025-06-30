@@ -1,15 +1,17 @@
+import { Node } from './broadcast-net/index.js';
 import { Buffer } from 'buffer';
-import { Node } from './broadcast-net';
+
+const port = parseInt(process.env.PORT || '8080', 10);
+const bootstrap = process.argv.slice(2); // <- Neue Bootstrap-URLs aus Kommandozeile
 
 const node = new Node({
-    port: 8080,
-    bootstrap: ['ws://127.0.0.1:8081'],
+    port,
+    bootstrap,
     onPocket: (data) => {
-        console.log('Received:', data.toString());
+        console.log(`(${port}) Received:`, data.toString());
     }
 });
 
-// Send a test packet after 2 seconds
 setTimeout(() => {
-    node.send(Buffer.from('Hello, peers!'));
+    node.send(Buffer.from(`Hello from ${port}`));
 }, 2000);

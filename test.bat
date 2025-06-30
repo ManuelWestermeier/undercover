@@ -1,5 +1,8 @@
 @echo off
+
 setlocal enabledelayedexpansion
+
+:a
 
 :: Start all nodes in new windows and store their PIDs
 echo Starting nodes...
@@ -19,4 +22,10 @@ pause
 echo Killing all node processes...
 taskkill /F /IM node.exe /T
 
-exit
+cls
+
+echo Wanna Exit...
+
+pause
+
+goto a

@@ -1,5 +1,5 @@
-// decentralized-broadcast-node.mjs
-import WebSocket from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
+import { Buffer } from 'buffer';
 import crypto from 'crypto';
 
 export class Node {
@@ -12,7 +12,7 @@ export class Node {
     #maxPeers = 100;
     #server;
 
-    constructor({ port = 443, bootstrap = [], onPocket = () => { } }) {
+    constructor({ port = 8080, bootstrap = [], onPocket = (data = new Buffer()) => { } }) {
         this.#port = port;
         this.#bootstrap = bootstrap;
         this.#onPocket = onPocket;
@@ -25,7 +25,7 @@ export class Node {
     }
 
     #startServer() {
-        this.#server = new WebSocket.Server({ port: this.#port });
+        this.#server = new WebSocketServer({ port: this.#port });
         this.#server.on('connection', (ws) => {
             this.#addPeer(ws);
             ws.on('message', (data) => this.#handleMessage(ws, data));

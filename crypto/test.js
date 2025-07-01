@@ -4,8 +4,8 @@ import {
   privateDecrypt,
   privateEncrypt,
   publicDecrypt,
-  encSyn,
-  decSyn,
+  encSym,
+  decSym,
   sign,
   verify,
   hash,
@@ -40,8 +40,8 @@ console.log();
 // --- AES-GCM Symmetric Encryption ---
 console.log("🧪 AES-GCM Symmetric Encryption");
 const { key, iv } = generateAESKeyIV();
-const aesEncrypted = encSyn(key, iv, message);
-const aesDecrypted = decSyn(key, iv, aesEncrypted);
+const aesEncrypted = encSym(key, iv, message);
+const aesDecrypted = decSym(key, iv, aesEncrypted);
 console.log("AES Decrypted:", aesDecrypted.toString());
 console.log();
 

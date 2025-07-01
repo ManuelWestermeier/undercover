@@ -1,3 +1,4 @@
+import Identity from "./identity/index.js";
 import NetNode from "./node/index.js";
 
 const port = parseInt(process.env.PORT || "8080", 10);
@@ -8,4 +9,27 @@ const nn = new NetNode({
   bootstrap,
 });
 
+const identityPath = "./idenetys/" + port + ".txt";
+
+if (!nn.identity.load(identityPath)) {
+  console.log("gen");
+
+  nn.identity.generate();
+}
+nn.identity.store(identityPath);
+
+console.log(identityPath);
+
 nn.start();
+
+nn.onData = (addr, data) => {
+  console.log(`${addr}, ${data}`);
+};
+
+if (port == 8082) {
+  const identity = new Identity();
+
+  identity.load("./idenetys/8081.txt");
+
+  nn.send(identity.toAddress(), "data");
+}

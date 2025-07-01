@@ -1,4 +1,3 @@
-// cryptoLib.mjs
 import {
   generateKeyPairSync,
   publicEncrypt as rsaPubEnc,
@@ -78,13 +77,13 @@ export function publicDecrypt(publicKeyDer, value) {
   );
 }
 
-export function encSyn(key, iv, data) {
+export function encSym(key, iv, data) {
   const cipher = createCipheriv("aes-256-gcm", key, iv);
   const enc = Buffer.concat([cipher.update(data), cipher.final()]);
   return Buffer.concat([enc, cipher.getAuthTag()]);
 }
 
-export function decSyn(key, iv, encryptedDataWithTag) {
+export function decSym(key, iv, encryptedDataWithTag) {
   const tag = encryptedDataWithTag.slice(-16);
   const encrypted = encryptedDataWithTag.slice(0, -16);
   const decipher = createDecipheriv("aes-256-gcm", key, iv);

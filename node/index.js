@@ -1,5 +1,4 @@
 import { Node } from "../broadcast-net/index.js";
-import { Buffer } from "buffer";
 
 export default class NetNode {
   constructor({ port = 11277, bootstrap = [] }) {
@@ -13,12 +12,12 @@ export default class NetNode {
   }
 
   update() {
-    node.send(Buffer.from(`Hello from ${port}`));
+    this.node.send(Buffer.from("Hi >> " + Math.random()));
   }
 
   start() {
     this.loop = setInterval(() => {
-      update();
+      this.update();
     }, 2000);
   }
 

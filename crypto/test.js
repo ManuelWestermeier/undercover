@@ -12,13 +12,20 @@ import {
   generateAESKeyIV,
 } from "./index.js";
 
-const message = Buffer.from("Top secret data");
+const message = Buffer.from("Top secret data!");
 
 // --- RSA-OAEP Encrypt/Decrypt ---
 console.log("🔐 RSA-OAEP Encrypt/Decrypt");
 const { publicKey, privateKey } = generateKeyPair();
 
+console.log(publicKey);
+
+console.log(privateKey);
+
 const rsaEncrypted = publicEncrypt(publicKey, message);
+
+console.log(rsaEncrypted);
+
 const rsaDecrypted = privateDecrypt(privateKey, rsaEncrypted);
 console.log("Decrypted:", rsaDecrypted.toString());
 console.log();

@@ -5,12 +5,19 @@ export default class Addres {
   #pk = null;
 
   store(path = "") {
-    fs.writeFileSync(path, this.#pk, "utf-8");
+    fs.writeFileSync(
+      path,
+      JSON.stringify([Buffer.from(this.#pk, "utf-8")]),
+      "utf-8"
+    );
   }
 
   load(path) {
     try {
-      this.#pk = fs.readFileSync(path, "utf-8");
+      this.#pk = Buffer.from(
+        JSON.parse(fs.readFileSync(path, "utf-8"))[0],
+        "utf-8"
+      );
       return true;
     } catch (error) {
       return false;

@@ -30,11 +30,19 @@ export default class NetNode {
       return;
     }
 
-    const [addr, data] = msg;
+    const [addr, data] = [msg[0].get(), msg[1]];
 
     const key = generateAESKeyIV();
 
-    const decKey = publicEncrypt(addr, Buffer.from(JSON.stringify(key)));
+    const binaryKey = Buffer.concat([key.key, key.iv]);
+
+    console.log("binaryKey", binaryKey);
+
+    console.log("addr", addr);
+
+    const decKey = publicEncrypt(addr, binaryKey);
+
+    console.log("decKey", decKey);
 
     this.node.send(
       Buffer.from(

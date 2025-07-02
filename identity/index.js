@@ -15,10 +15,11 @@ export default class Identity {
   }
 
   isValidate() {
-    return this.pk && this.sk && this.addr;
+    return Boolean(this.pk && this.sk && this.addr);
   }
 
   toString() {
+    // store both keys as base64 strings
     return JSON.stringify([
       this.pk.toString("base64"),
       this.sk.toString("base64"),
@@ -26,9 +27,9 @@ export default class Identity {
   }
 
   fromString(str = "") {
-    const [pk, sk] = JSON.parse(str);
-    this.pk = Buffer.from(pk, "base64");
-    this.sk = Buffer.from(sk, "base64");
+    const [pkB64, skB64] = JSON.parse(str);
+    this.pk = Buffer.from(pkB64, "base64");
+    this.sk = Buffer.from(skB64, "base64");
     this.addr = hash(this.pk);
   }
 
@@ -41,13 +42,13 @@ export default class Identity {
       this.fromString(fs.readFileSync(path, "utf-8"));
       return true;
     } catch (error) {
-      console.error(error);
+      console.error("Identity.load error:", error);
       return false;
     }
   }
 
-  set(identity = "") {
-    this.fromString(identity);
+  set(serialized = "") {
+    this.fromString(serialized);
   }
 
   get() {
@@ -59,8 +60,6 @@ export default class Identity {
   }
 
   getPublicKeyPem() {
-    return `-----BEGIN PUBLIC KEY-----\n${this.pk.toString(
-      "base64"
-    )}\n-----END PUBLIC KEY-----`;
+    return this.toAddress().toPem();
   }
 }

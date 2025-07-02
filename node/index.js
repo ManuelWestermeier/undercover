@@ -11,15 +11,7 @@ export default class NetNode {
       port,
       bootstrap,
       onPocket: (data) => {
-        const str = data.toString();
-        const parts = str.split("\n");
-        if (parts.length === 2) {
-          const [keyBuf, encBuf] = parts.map((p) => Buffer.from(p, "base64"));
-          // TODO: decrypt keyBuf with private key and then decrypt encBuf
-          this.onData("?", encBuf);
-        } else {
-          console.log(`(${port}) Received:`, data.toString());
-        }
+        console.log(`(${port}) Received:`, data.toString());
       },
     });
   }
@@ -32,18 +24,27 @@ export default class NetNode {
 
   update() {
     const msg = this.#dataStack.shift();
-    if (!msg) return;
 
-    const [addr, data] = msg;
+    if (!msg) {
+      // no queued messages — send a heartbeat
+      this.node.send(Buffer.from("Hi >> " + Math.random()));
+      return;
+    }
+
+    const [addrObj, data] = msg;
+    const addrPem = addrObj.toPem(); // <-- use PEM form
     const { key, iv } = generateAESKeyIV();
     const binaryKey = Buffer.concat([key, iv]);
 
-    const encryptedKey = publicEncrypt(addr.toPem(), binaryKey);
+    // encrypt the symmetric key with the recipient's public key
+    const encryptedKey = publicEncrypt(addrPem, binaryKey);
+
+    // symmetrically encrypt the payload
     const encryptedData = encSym(key, iv, data);
 
-    const combined = `${encryptedKey.toString(
-      "base64"
-    )}\n${encryptedData.toString("base64")}`;
+    // combine into a single message (key\npayload)
+    const combined =
+      encryptedKey.toString("base64") + "\n" + encryptedData.toString("base64");
 
     this.node.send(Buffer.from(combined, "utf-8"));
   }

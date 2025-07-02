@@ -1,25 +1,10 @@
 import fs from "fs";
-import Identity from "../identity/index.js";
 
 export default class Address {
   #pk = null;
 
-  store(path = "") {
-    fs.writeFileSync(
-      path,
-      JSON.stringify([Buffer.from(this.#pk).toString("base64")]),
-      "utf-8"
-    );
-  }
-
-  load(path) {
-    try {
-      const encoded = JSON.parse(fs.readFileSync(path, "utf-8"))[0];
-      this.#pk = Buffer.from(encoded, "base64");
-      return true;
-    } catch (error) {
-      return false;
-    }
+  constructor(pk = null) {
+    this.#pk = pk;
   }
 
   set(addr) {
@@ -30,17 +15,34 @@ export default class Address {
     return this.#pk;
   }
 
-  fromIdentity(identity = new Identity()) {
-    this.#pk = identity.addr;
+  store(path = "") {
+    // serialize as base64
+    fs.writeFileSync(
+      path,
+      JSON.stringify([this.#pk.toString("base64")]),
+      "utf-8"
+    );
   }
 
-  constructor(pk) {
-    this.set(pk);
+  load(path) {
+    try {
+      const encoded = JSON.parse(fs.readFileSync(path, "utf-8"))[0];
+      this.#pk = Buffer.from(encoded, "base64");
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   toPem() {
-    return `-----BEGIN PUBLIC KEY-----\n${this.#pk.toString(
-      "base64"
-    )}\n-----END PUBLIC KEY-----`;
+    // wrap the DER bytes in a PEM header/footer
+    return [
+      "-----BEGIN PUBLIC KEY-----",
+      this.#pk
+        .toString("base64")
+        .match(/.{1,64}/g)
+        .join("\n"),
+      "-----END PUBLIC KEY-----",
+    ].join("\n");
   }
 }

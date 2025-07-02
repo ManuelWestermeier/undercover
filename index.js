@@ -1,24 +1,24 @@
-import Addres from "./address/index.js";
+import Address from "./address/index.js"; // corrected import name
 import NetNode from "./node/index.js";
+import fs from "fs";
 
 const port = parseInt(process.env.PORT || "8082", 10);
-const bootstrap = process.argv.slice(2) || []; // <- Neue Bootstrap-URLs aus Kommandozeile
+const bootstrap = process.argv.slice(2);
 
-const nn = new NetNode({
-  port,
-  bootstrap,
-});
+const nn = new NetNode({ port, bootstrap });
 
-const identityPath = "./idenetys/" + port + ".txt";
+// ensure identity directory exists
+if (!fs.existsSync("./identities")) fs.mkdirSync("./identities");
 
+// persist/load identity
+const identityPath = `./identities/${port}.txt`;
 if (!nn.identity.load(identityPath)) {
-  console.log("gen");
-
+  console.log("Generating new identity...");
   nn.identity.generate();
 }
 nn.identity.store(identityPath);
 
-console.log(identityPath);
+console.log(`Identity stored at ${identityPath}`);
 
 nn.start();
 
@@ -26,13 +26,12 @@ nn.onData = (addr, data) => {
   console.log(`${addr}, ${data}`);
 };
 
-if (port == 8082) {
-  const address = new Addres();
+if (port === 8082) {
+  const address = new Address();
+  if (!address.load("./identities/8081.txt")) {
+    throw new Error("Failed to load peer identity at port 8081");
+  }
 
-  address.load("./idenetys/8081.txt");
-
-console.log(address);
-
-
-  nn.send(address, Buffer.from("data"));
+  // enqueue a message to port 8081
+  nn.send(address, Buffer.from("Hello from 8082"));
 }

@@ -1,5 +1,10 @@
 import { Node } from "../broadcast-net/index.js";
-import { encSym, generateAESKeyIV, publicEncrypt } from "../crypto/index.js";
+import {
+  encSym,
+  generateAESKeyIV,
+  hash,
+  publicEncrypt,
+} from "../crypto/index.js";
 import Identity from "../identity/index.js";
 
 export default class NetNode {
@@ -16,7 +21,13 @@ export default class NetNode {
     });
   }
 
-  send(addr, data) {
+  send(addr = new Buffer(), ct = new Buffer()) {
+    const data = Buffer.alloc(2 ** 5, 0);
+
+    for (let i = 0; i < ct.length || i < 2 ** 16 - 1; i++) {
+      data[i] = ct[i];
+    }
+
     this.#dataStack.push([addr, data]);
   }
 
@@ -42,9 +53,18 @@ export default class NetNode {
     // symmetrically encrypt the payload
     const encryptedData = encSym(key, iv, data);
 
+    // symmetrically encrypt the addres
+    const encryptedAddres = encSym(key, iv, hash(addrObj.get()));
+
     // combine into a single message (key\npayload)
     const combined =
-      encryptedKey.toString("base64") + "\n" + encryptedData.toString("base64");
+      encryptedKey.toString("base64") +
+      "\n" +
+      encryptedAddres +
+      "\n" +
+      encryptedData.toString("base64");
+
+    console.log("combined.length", combined.length);
 
     this.node.send(Buffer.from(combined, "utf-8"));
   }

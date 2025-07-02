@@ -28,10 +28,11 @@ nn.onData = (addr, data) => {
 
 if (port === 8082) {
   const address = new Address();
+
   if (!address.load("./identities/8081.txt")) {
     throw new Error("Failed to load peer identity at port 8081");
   }
 
   // enqueue a message to port 8081
-  nn.send(address, Buffer.from("Hello from 8082"));
+  nn.send(address, Buffer.from("Hello from 8082!!"));
 }

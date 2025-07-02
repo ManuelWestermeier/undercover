@@ -11,7 +11,15 @@ export default class NetNode {
       port,
       bootstrap,
       onPocket: (data) => {
-        console.log(`(${port}) Received:`, data.toString());
+        const str = data.toString();
+        const parts = str.split("\n");
+        if (parts.length === 2) {
+          const [keyBuf, encBuf] = parts.map((p) => Buffer.from(p, "base64"));
+          // TODO: decrypt keyBuf with private key and then decrypt encBuf
+          this.onData("?", encBuf);
+        } else {
+          console.log(`(${port}) Received:`, data.toString());
+        }
       },
     });
   }
@@ -24,41 +32,24 @@ export default class NetNode {
 
   update() {
     const msg = this.#dataStack.shift();
+    if (!msg) return;
 
-    if (!msg) {
-      this.node.send(Buffer.from("Hi >> " + Math.random()));
-      return;
-    }
+    const [addr, data] = msg;
+    const { key, iv } = generateAESKeyIV();
+    const binaryKey = Buffer.concat([key, iv]);
 
-    const [addr, data] = [msg[0].get(), msg[1]];
+    const encryptedKey = publicEncrypt(addr.toPem(), binaryKey);
+    const encryptedData = encSym(key, iv, data);
 
-    const key = generateAESKeyIV();
+    const combined = `${encryptedKey.toString(
+      "base64"
+    )}\n${encryptedData.toString("base64")}`;
 
-    const binaryKey = Buffer.concat([key.key, key.iv]);
-
-    console.log("binaryKey", binaryKey);
-
-    console.log("addr", addr);
-
-    const decKey = publicEncrypt(addr, binaryKey);
-
-    console.log("decKey", decKey);
-
-    this.node.send(
-      Buffer.from(
-        `${Buffer.from(decKey, "base64")}\n${Buffer.from(
-          encSym(key.key, key.iv, data),
-          "base64"
-        )}`,
-        "utf-8"
-      )
-    );
+    this.node.send(Buffer.from(combined, "utf-8"));
   }
 
   start() {
-    this.loop = setInterval(() => {
-      this.update();
-    }, 2000);
+    this.loop = setInterval(() => this.update(), 2000);
   }
 
   pause() {

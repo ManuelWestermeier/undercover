@@ -29,14 +29,10 @@ export function generateKeyPair() {
   };
 }
 
-export function publicEncrypt(publicKeyDer, value) {
-  const publicKey = createPublicKey({
-    key: publicKeyDer,
-    format: "der",
-    type: "spki",
-  });
+export function publicEncrypt(publicKeyPem, value) {
+  const keyObject = createPublicKey(publicKeyPem);
   return rsaPubEnc(
-    { key: publicKey, padding: constants.RSA_PKCS1_OAEP_PADDING },
+    { key: publicKeyPem, padding: constants.RSA_PKCS1_OAEP_PADDING },
     value
   );
 }

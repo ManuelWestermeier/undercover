@@ -31,5 +31,8 @@ if (port == 8082) {
 
   address.load("./idenetys/8081.txt");
 
+console.log(address);
+
+
   nn.send(address, Buffer.from("data"));
 }

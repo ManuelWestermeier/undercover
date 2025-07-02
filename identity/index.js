@@ -1,7 +1,6 @@
-import { buffer } from "stream/consumers";
 import { generateKeyPair, hash } from "../crypto/index.js";
 import fs from "fs";
-import Addres from "../address/index.js";
+import Address from "../address/index.js";
 
 export default class Identity {
   pk = null;
@@ -16,21 +15,21 @@ export default class Identity {
   }
 
   isValidate() {
-    return pk && sk && addr;
+    return this.pk && this.sk && this.addr;
   }
 
   toString() {
     return JSON.stringify([
-      Buffer.from(this.pk).toString("utf-8"),
-      Buffer.from(this.sk).toString("utf-8"),
+      this.pk.toString("base64"),
+      this.sk.toString("base64"),
     ]);
   }
 
   fromString(str = "") {
     const [pk, sk] = JSON.parse(str);
-    this.pk = Buffer.from(pk, "utf-8");
-    this.sk = Buffer.from(sk, "utf-8");
-    this.addr = hash(pk);
+    this.pk = Buffer.from(pk, "base64");
+    this.sk = Buffer.from(sk, "base64");
+    this.addr = hash(this.pk);
   }
 
   store(path = "") {
@@ -43,7 +42,6 @@ export default class Identity {
       return true;
     } catch (error) {
       console.error(error);
-
       return false;
     }
   }
@@ -57,6 +55,12 @@ export default class Identity {
   }
 
   toAddress() {
-    return new Addres(this.pk);
+    return new Address(this.pk);
+  }
+
+  getPublicKeyPem() {
+    return `-----BEGIN PUBLIC KEY-----\n${this.pk.toString(
+      "base64"
+    )}\n-----END PUBLIC KEY-----`;
   }
 }

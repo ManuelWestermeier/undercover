@@ -1,23 +1,21 @@
 import fs from "fs";
 import Identity from "../identity/index.js";
 
-export default class Addres {
+export default class Address {
   #pk = null;
 
   store(path = "") {
     fs.writeFileSync(
       path,
-      JSON.stringify([Buffer.from(this.#pk, "utf-8")]),
+      JSON.stringify([Buffer.from(this.#pk).toString("base64")]),
       "utf-8"
     );
   }
 
   load(path) {
     try {
-      this.#pk = Buffer.from(
-        JSON.parse(fs.readFileSync(path, "utf-8"))[0],
-        "utf-8"
-      );
+      const encoded = JSON.parse(fs.readFileSync(path, "utf-8"))[0];
+      this.#pk = Buffer.from(encoded, "base64");
       return true;
     } catch (error) {
       return false;
@@ -38,5 +36,11 @@ export default class Addres {
 
   constructor(pk) {
     this.set(pk);
+  }
+
+  toPem() {
+    return `-----BEGIN PUBLIC KEY-----\n${this.#pk.toString(
+      "base64"
+    )}\n-----END PUBLIC KEY-----`;
   }
 }

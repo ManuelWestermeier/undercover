@@ -54,15 +54,8 @@ export default class NetNode {
         ENC_KEY_SIZE + ADDR_HASH_SIZE + PUBKEY_SIZE
       );
 
-      try {
-        const decryptedKeyIV = privateDecrypt(
-          this.identity.privateKeyPem(),
-          encryptedKey
-        );
-      } catch (error) {
-        console.log(error);
-      }
-
+      // Use raw DER buffer instead of PEM string
+      const decryptedKeyIV = privateDecrypt(this.identity.sk, encryptedKey);
       const key = decryptedKeyIV.subarray(0, 32);
       const iv = decryptedKeyIV.subarray(32);
 
@@ -75,13 +68,12 @@ export default class NetNode {
 
       let senderPubKey = null;
       if (!senderPubKeyBuf.equals(Buffer.alloc(PUBKEY_SIZE, 0))) {
-        const pemStr = senderPubKeyBuf.toString("utf-8").replace(/\0+$/, ""); // trim nulls
+        const pemStr = senderPubKeyBuf.toString("utf-8").replace(/\0+$/g, ""); // trim nulls
         senderPubKey = pemStr;
       }
 
       this.onData(senderPubKey, Buffer.from(decryptedPayload));
     } catch (err) {
-      // console.error(err);
       // not for us or corrupted
     }
   }

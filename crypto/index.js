@@ -30,7 +30,6 @@ export function generateKeyPair() {
 }
 
 export function publicEncrypt(publicKeyPem, value) {
-  const keyObject = createPublicKey(publicKeyPem);
   return rsaPubEnc(
     { key: publicKeyPem, padding: constants.RSA_PKCS1_OAEP_PADDING },
     value

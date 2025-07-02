@@ -26,12 +26,16 @@ nn.onData = (addr, data) => {
   console.log(`${addr}, ${data}`);
 };
 
+console.log(nn.identity.pk);
+
 if (port === 8082) {
   const address = new Address();
 
   if (!address.load("./identities/8081.txt")) {
     throw new Error("Failed to load peer identity at port 8081");
   }
+
+  console.log(address);
 
   // enqueue a message to port 8081
   nn.send(address, Buffer.from("Hello from 8082!!"));

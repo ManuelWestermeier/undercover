@@ -56,8 +56,7 @@ function bundleProject() {
 
   for (const file of files) {
     const ext = path.extname(file.path);
-    if (![".js", ".json", ".html", ".css", ".txt", ".md"].includes(ext))
-      continue;
+    if (![".js", ".md"].includes(ext)) continue;
 
     const content = fs.readFileSync(file.path, "utf-8");
 

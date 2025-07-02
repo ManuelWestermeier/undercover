@@ -62,4 +62,16 @@ export default class Identity {
   getPublicKeyPem() {
     return this.toAddress().toPem();
   }
+
+  privateKeyPem() {
+    // wrap the DER bytes in a PEM header/footer
+    return [
+      "-----BEGIN PRIVATE KEY-----",
+      this.sk
+        .toString("base64")
+        .match(/.{1,64}/g)
+        .join("\n"),
+      "-----END PRIVATE KEY-----",
+    ].join("\n");
+  }
 }

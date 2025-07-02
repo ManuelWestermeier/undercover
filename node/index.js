@@ -38,7 +38,7 @@ export default class NetNode {
   #handleIncoming(buf) {
     const expectedLength =
       ENC_KEY_SIZE + ADDR_HASH_SIZE + PUBKEY_SIZE + FIXED_PAYLOAD_SIZE;
-    if (buf.length < expectedLength) return;
+    if (buf.length < expectedLength) return console.error("<<");
 
     try {
       const encryptedKey = buf.subarray(0, ENC_KEY_SIZE);
@@ -54,16 +54,22 @@ export default class NetNode {
         ENC_KEY_SIZE + ADDR_HASH_SIZE + PUBKEY_SIZE
       );
 
-      const decryptedKeyIV = privateDecrypt(
-        this.identity.privateKeyPem(),
-        encryptedKey
-      );
+      try {
+        const decryptedKeyIV = privateDecrypt(
+          this.identity.privateKeyPem(),
+          encryptedKey
+        );
+      } catch (error) {
+        console.log(error);
+      }
+
       const key = decryptedKeyIV.subarray(0, 32);
       const iv = decryptedKeyIV.subarray(32);
 
-      const expectedHash = hash(this.identity.publicKey.get());
+      const expectedHash = hash(this.identity.pk);
       const decryptedHash = decSym(key, iv, encryptedAddrHash);
-      if (!decryptedHash.equals(expectedHash)) return;
+      if (!decryptedHash.equals(expectedHash))
+        return console.error("!decryptedHash.equals(expectedHash)");
 
       const decryptedPayload = decSym(key, iv, encryptedPayload);
 
@@ -75,6 +81,7 @@ export default class NetNode {
 
       this.onData(senderPubKey, Buffer.from(decryptedPayload));
     } catch (err) {
+      // console.error(err);
       // not for us or corrupted
     }
   }
@@ -94,7 +101,6 @@ export default class NetNode {
     if (!msg) {
       // Send random packet (fake traffic)
       const randomPayload = crypto.randomBytes(FIXED_PAYLOAD_SIZE);
-      const fakeKey = crypto.randomBytes(48); // 32 key + 16 iv
       const fakeEncryptedKey = crypto.randomBytes(ENC_KEY_SIZE);
       const fakeAddrHash = crypto.randomBytes(ADDR_HASH_SIZE);
       const fakeSender = crypto.randomBytes(PUBKEY_SIZE);
@@ -119,25 +125,35 @@ export default class NetNode {
     const encryptedAddrHash = encSym(key, iv, hash(addrObj.get()));
     const encryptedPayload = encSym(key, iv, data);
 
-    // fixed sender pub key field
     let senderPubKeyBuf;
     if (anonymous) {
       senderPubKeyBuf = Buffer.alloc(PUBKEY_SIZE, 0);
     } else {
-      const pem = this.identity.publicKey.toPem();
+      const pem = this.#toPem(this.identity.pk);
       const pemBuf = Buffer.from(pem, "utf-8");
       senderPubKeyBuf = Buffer.alloc(PUBKEY_SIZE, 0);
       pemBuf.copy(senderPubKeyBuf);
     }
 
     const fullPacket = Buffer.concat([
-      encryptedKey, // 256
-      encryptedAddrHash, // 32
-      senderPubKeyBuf, // 512
-      encryptedPayload, // >=1024
+      encryptedKey,
+      encryptedAddrHash,
+      senderPubKeyBuf,
+      encryptedPayload,
     ]);
 
     this.node.send(fullPacket);
+  }
+
+  #toPem(rawBuf) {
+    return [
+      "-----BEGIN PUBLIC KEY-----",
+      rawBuf
+        .toString("base64")
+        .match(/.{1,64}/g)
+        .join("\n"),
+      "-----END PUBLIC KEY-----",
+    ].join("\n");
   }
 
   start() {
